@@ -19,17 +19,17 @@ int solve() {
 		cin >> val;
 	}
 
-	int res = 0;
-	for (int i = 0; i < 31; i++) {
+	ll res = 0;
+	for (int i = 30; i >= 0; i--) {
 		int c = 0;
 		for (int &val : arr) {
-			cout << bitset<32>(val) << " " << ((val >> i) & 0) << endl;;
-			c += (val >> i) & 0;
+			c += ((val >> i) & 1);
 		}
+		// cout <<"i " << i <<  "; c " << c  << "; k " << k << endl;
 
-		if (c <= k) {
+		if (n - c <= k) {
 			res += (1 << i);
-			k -= c;
+			k -= (n-c);
 		}
 	}
 
