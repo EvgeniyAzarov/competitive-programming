@@ -91,7 +91,7 @@ if __name__ == '__main__':
     # print(list(tests_res))
 
     res_sum = np.array(tests_res).sum()
-    sum_base = base_res[:N+1].sum()
+    sum_base = base_res[N0:N+1].sum()
     print(f"Sum: {res_sum}")
     print(f"Base: {sum_base}")
     print(f"diff with base: {res_sum - sum_base}")

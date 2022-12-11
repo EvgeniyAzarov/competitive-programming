@@ -5,7 +5,7 @@ using namespace std;
 const double SZ = 10.0;
 const int MAX_N = 200;
 const int INF = 1e+9;
-int IT = 1000;
+int IT = 3000;
 int IT_UE = 100;
 const double C_NS = 0.299792458;
 
@@ -124,8 +124,8 @@ int main() {
 	for (int i = 0; i < IT; ++i) {
 		// Idea4: adjust positions of 3 and 4 BS iteratively, instead of random sampling each time. 
 		// Idea5: Use information of estimated UE positions. Probably this will produce some convergance
-		// if (i % 2 == 0) {
-		if (third_bs){
+		if (i % 2 == 0) {
+		// if (third_bs){
 			bs[2][0] = -get_rand() * SZ;
 			bs[2][1] = get_rand() * SZ;
 			bs[3][0] = bs_best[3][0];
@@ -145,11 +145,12 @@ int main() {
 
 			for (int k = 0; k < IT_UE; ++k) {
 				double ue_x, ue_y;
-				if (!total_random[j] && n < 100) {
-					int random_index = rand() % hx[j].size();
+				// if (!total_random[j] && n < 100) {
+				if (!total_random[j] && k % 2 == 0) {
+					// int random_index = rand() % hx[j].size();
 					// ue_x = hx[j][random_index];
 					// ue_y = hy[j][random_index];
-					if (k > hx[j].size()){
+					if (k >= hx[j].size()){
 						break;
 					}
 					ue_x = hx[j][k];
@@ -160,12 +161,18 @@ int main() {
 				}
 
 				for (int l = 0; l < 4; ++l)
-					toa[l] = sqrt((ue_x - bs[l][0]) * (ue_x - bs[l][0]) + (ue_y - bs[l][1]) * (ue_y - bs[l][1])) / C_NS;
+					toa[l] = sqrt(pow(ue_x - bs[l][0], 2) + pow(ue_y - bs[l][1], 2)) / C_NS;
 
+				double loss0 = 0, loss1 = 0;
 				double loss = 0;
-				for (int l = 1; l < 4; ++l)
-					loss += ((toa[l] - toa[0]) - (t[j][l] - t[j][0])) * ((toa[l] - toa[0]) - (t[j][l] - t[j][0]));
+				double weights[4] = {1, 1, 0.5, 0.5};
+				for (int l = 1; l < 4; ++l) {
+					loss += weights[l] * ((toa[l] - toa[0]) - (t[j][l] - t[j][0])) * ((toa[l] - toa[0]) - (t[j][l] - t[j][0]));
+					// loss0 += weights[l] * abs((toa[l] - toa[0]) - (t[j][l] - t[j][0]));
+					// loss1 += weights[l] * abs((toa[l] - toa[1]) - (t[j][l] - t[j][1]));
+				}
 
+				// double loss = max(loss0, loss1);
 				if (loss < min_loss_ue) {
 					min_loss_ue = loss;
 					ue[j][0] = ue_x;

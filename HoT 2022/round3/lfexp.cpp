@@ -5,7 +5,7 @@ using namespace std;
 const double SZ = 10.0;
 const int MAX_N = 200;
 const int INF = 1e+9;
-int IT = 2000;
+int IT = 1000;
 int IT_UE = 100;
 const double C_NS = 0.299792458;
 
@@ -36,50 +36,6 @@ double norm(double x[]) {
 
 template <typename T> int sgn(T val) {
 	return (T(0) < val) - (val < T(0));
-}
-
-const double EPS = 0.001;
-int gauss (vector < vector<double> > a, vector<double> & ans) {
-	int n = (int) a.size();
-	int m = (int) a[0].size() - 1;
-
-	vector<int> where (m, -1);
-	for (int col=0, row=0; col<m && row<n; ++col) {
-		int sel = row;
-		for (int i=row; i<n; ++i)
-			if (abs (a[i][col]) > abs (a[sel][col]))
-				sel = i;
-		if (abs (a[sel][col]) < EPS)
-			continue;
-		for (int i=col; i<=m; ++i)
-			swap (a[sel][i], a[row][i]);
-		where[col] = row;
-
-		for (int i=0; i<n; ++i)
-			if (i != row) {
-				double c = a[i][col] / a[row][col];
-				for (int j=col; j<=m; ++j)
-					a[i][j] -= a[row][j] * c;
-			}
-		++row;
-	}
-
-	ans.assign (m, 0);
-	for (int i=0; i<m; ++i)
-		if (where[i] != -1)
-			ans[i] = a[where[i]][m] / a[where[i]][i];
-	for (int i=0; i<n; ++i) {
-		double sum = 0;
-		for (int j=0; j<m; ++j)
-			sum += ans[j] * a[i][j];
-		if (abs (sum - a[i][m]) > EPS)
-			return 0;
-	}
-
-	for (int i=0; i<m; ++i)
-		if (where[i] == -1)
-			return INF;
-	return 1;
 }
 
 int main() {
@@ -187,72 +143,35 @@ int main() {
 		for (int j = 0; j < n; ++j) {
 			double min_loss_ue = INF;
 
-			for (int k = -2; k < IT_UE; ++k) {
+			for (int k = 0; k < IT_UE; ++k) {
 				double ue_x, ue_y;
-				// if (!total_random[j] && n < 100) {
-				if (!total_random[j] && k % 2 == 0 && k >= 0) {
-					// int random_index = rand() % hx[j].size();
+				if (!total_random[j] && n < 100) {
+					int random_index = rand() % hx[j].size();
 					// ue_x = hx[j][random_index];
 					// ue_y = hy[j][random_index];
-					if (k >= hx[j].size()){
+					if (k > hx[j].size()){
 						break;
 					}
 					ue_x = hx[j][k];
 					ue_y = hy[j][k];
-				} else if (k >= 0){
+				} else {
 					ue_x = (get_rand(2) - 1) * SZ;
 					ue_y = (get_rand(2) - 1) * SZ;
-				} else if (k == -1) {
-					// hyperbolas intersection
-					vector< vector <double > > A(3, vector<double>(4));
-
-					for (int ii = 0; ii < 3; ii++) {
-						A[ii][0] = bs[ii+1][0] - bs[0][0];
-						A[ii][1] = bs[ii+1][1] - bs[0][1];
-						A[ii][2] = C_NS * (t[j][ii+1] - t[j][0]);
-						A[ii][3] = (pow(bs[ii+1][0], 2) + pow(bs[ii+1][1], 2) - pow(bs[0][0], 2) - pow(bs[0][1], 2) - 
-							pow(C_NS * (t[j][ii+1] - t[j][0]), 2)) / 2;
-					}
-
-					// cout << "A matrix" << endl;
-					// for (int u = 0; u < 3; u++) {
-					// 	for (int v = 0; v < 4; v++) {
-					// 		cout << A[u][v] << " ";
-					// 	}
-					// 	cout << endl;
-					// }
-					// cout << endl;
-
-
-					vector <double> ans;
-
-					int res = gauss(A, ans);
-
-					if (res != 0 && ans[0] >= -SZ && ans[0] <= SZ && ans[1] >= -SZ && ans[1] <= SZ) {
-					// if (res != 0) {
-						// cout << "Intersection found: " << ue_x << " " << ue_y << endl;
-						ue_x = ans[0];
-						ue_y = ans[1];
-					} else {
-						ue_x = (get_rand(2) - 1) * SZ;
-						ue_y = (get_rand(2) - 1) * SZ;
-					}
-				} else if (k == -2) {
-					ue_x = ue_best[j][0];
-					ue_y = ue_best[j][1];
 				}
-
 
 				for (int l = 0; l < 4; ++l)
 					toa[l] = sqrt(pow(ue_x - bs[l][0], 2) + pow(ue_y - bs[l][1], 2)) / C_NS;
 
-				double loss = 0;
+				double loss0 = 0, loss1 = 0;
 				double weights[4] = {1, 1, 0.5, 0.5};
-				// double weights[4] = {1, 1, 1, 1};
 				for (int l = 1; l < 4; ++l) {
 					// loss += weights[l] * ((toa[l] - toa[0]) - (t[j][l] - t[j][0])) * ((toa[l] - toa[0]) - (t[j][l] - t[j][0]));
-					loss += weights[l] * abs((toa[l] - toa[0]) - (t[j][l] - t[j][0]));
+					loss0 += weights[l] * abs((toa[l] - toa[0]) - (t[j][l] - t[j][0]));
+					loss1 += weights[l] * abs((toa[l] - toa[1]) - (t[j][l] - t[j][1]));
 				}
+				
+				// double loss = loss0 + loss1;
+				double loss = max(loss0, loss1);
 
 				if (loss < min_loss_ue) {
 					min_loss_ue = loss;
